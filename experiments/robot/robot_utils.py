@@ -12,6 +12,8 @@ from experiments.robot.openvla_utils import (
     get_vla_action,
 )
 
+from clip_rt_utils import get_clip_rt, _get_clip_rt_action
+
 # Initialize important constants and pretty-printing mode in NumPy.
 ACTION_DIM = 7
 DATE = time.strftime("%Y_%m_%d")
@@ -41,6 +43,8 @@ def get_model(cfg, wrap_diffusion_policy_for_droid=False):
     """Load model for evaluation."""
     if cfg.model_family == "openvla":
         model = get_vla(cfg)
+    elif cfg.model_family == "clip_rt":
+        model, preprocess, tokenizer, action_classes, lookup_table = get_clip_rt()
     else:
         raise ValueError("Unexpected `model_family` found in config.")
     print(f"Loaded model: {type(model)}")
@@ -54,6 +58,8 @@ def get_image_resize_size(cfg):
     Else, the image will be a rectangle.
     """
     if cfg.model_family == "openvla":
+        resize_size = 224
+    elif cfg.model_family == "clip_rt":
         resize_size = 224
     else:
         raise ValueError("Unexpected `model_family` found in config.")
@@ -69,6 +75,18 @@ def get_action(cfg, model, obs, task_label, processor=None):
         assert action.shape == (ACTION_DIM,)
     else:
         raise ValueError("Unexpected `model_family` found in config.")
+    return action
+
+
+def get_clip_rt_action(model, preprocess, tokenizer, action_classes, lookup_table, obs, task_label, device=DEVICE):
+    from PIL import Image
+
+    image = Image.fromarray(obs["full_image"])
+    image = image.convert("RGB")
+
+    """Queries the model to get an action."""
+    action = _get_clip_rt_action(model, preprocess, tokenizer, action_classes, lookup_table, image, task_label, device)
+    assert action.shape == (ACTION_DIM,)
     return action
 
 
