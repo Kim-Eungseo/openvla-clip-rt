@@ -78,14 +78,14 @@ def get_action(cfg, model, obs, task_label, processor=None):
     return action
 
 
-def get_clip_rt_action(model, preprocess, tokenizer, action_classes, lookup_table, obs, task_label, device=DEVICE):
+def get_clip_rt_action(model, preprocess, tokenizer, action_classes, lookup_table, obs, task_label, zero_action_exception, device=DEVICE):
     from PIL import Image
 
     image = Image.fromarray(obs["full_image"])
     image = image.convert("RGB")
 
     """Queries the model to get an action."""
-    action = _get_clip_rt_action(model, preprocess, tokenizer, action_classes, lookup_table, image, task_label, device)
+    action = _get_clip_rt_action(model, preprocess, tokenizer, action_classes, lookup_table, image, task_label, zero_action_exception, device)
     assert action.shape == (ACTION_DIM,)
     return action
 
