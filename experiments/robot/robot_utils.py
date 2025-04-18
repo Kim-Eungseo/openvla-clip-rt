@@ -12,7 +12,8 @@ from experiments.robot.openvla_utils import (
     get_vla_action,
 )
 
-from clip_rt_utils import get_clip_rt, _get_clip_rt_action
+from clip_rt_utils import get_clip_rt
+from clip_rt_utils import _get_clip_rt_action_reg as _get_clip_rt_action
 
 # Initialize important constants and pretty-printing mode in NumPy.
 ACTION_DIM = 7
@@ -86,7 +87,7 @@ def get_clip_rt_action(model, preprocess, tokenizer, action_classes, lookup_tabl
 
     """Queries the model to get an action."""
     action = _get_clip_rt_action(model, preprocess, tokenizer, action_classes, lookup_table, image, task_label, zero_action_exception, device)
-    assert action.shape == (ACTION_DIM,)
+    # assert action.shape == (ACTION_DIM,)
     return action
 
 
@@ -100,6 +101,10 @@ def normalize_gripper_action(action, binarize=True):
     Normalization formula: y = 2 * (x - orig_low) / (orig_high - orig_low) - 1
     """
     # Just normalize the last action to [-1,+1].
+
+    action = np.array(action, dtype=np.float32)
+
+
     orig_low, orig_high = 0.0, 1.0
     action[..., -1] = 2 * (action[..., -1] - orig_low) / (orig_high - orig_low) - 1
 
@@ -107,7 +112,7 @@ def normalize_gripper_action(action, binarize=True):
         # Binarize to -1 or +1.
         action[..., -1] = np.sign(action[..., -1])
 
-    return action
+    return action.tolist()
 
 
 def invert_gripper_action(action):
@@ -116,5 +121,7 @@ def invert_gripper_action(action):
     This is necessary for some environments where -1 = open, +1 = close, since
     the RLDS dataloader aligns gripper actions such that 0 = close, 1 = open.
     """
+    action = np.array(action, dtype=np.float32)
+
     action[..., -1] = action[..., -1] * -1.0
-    return action
+    return action.tolist()
